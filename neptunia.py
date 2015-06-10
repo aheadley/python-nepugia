@@ -59,6 +59,13 @@ GSTLFile = Struct('strfile',
     )
 )
 
+GBNLFile = Struct('dbfile',
+    Struct('footer',
+        Magic('GBNL'),
+        Padding(60)
+    )
+)
+
 if __name__ == '__main__':
     import sys
     import os.path
