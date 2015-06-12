@@ -1,4 +1,3 @@
-#!/bin/env python
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -23,19 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__title__           = 'nepugia'
-__version__         = '0.0.1'
-__author__          = 'Alex Headley'
-__author_email__    = 'aheadley@waysaboutstuff.com'
-__license__         = 'The MIT License (MIT)'
-__copyright__       = 'Copyright 2015 Alex Headley'
-__url__             = 'https://github.com/aheadley/python-nepugia'
-__description__     = """
-Library for reading data from the Neptunia games
-""".strip()
-
 from construct import *
-
 
 # The format of the packed file container. Nearly all game files are stored
 # in side this container format. Note that the compression method is not yet
@@ -79,8 +66,8 @@ GSTLFormat = Struct('gstl',
         ULInt32('label_count'),
         # these are always observed to be 12, and 3 (respectively), use is
         # unknown (year and month of creation maybe?)
-        Const(ULInt32('always12'), 12),
-        Const(ULInt32('always3'), 3),
+        Const(ULInt32('const_00'), 0x0c),
+        Const(ULInt32('const_01'), 0x03),
         # end of header maybe, of end of label list
         ULInt32('end'),
         # total count of labels and strings
@@ -101,8 +88,8 @@ GSTLFormat = Struct('gstl',
             ULInt32('end_offset'),
             # note that this is a computed value and not present in the
             # on-disk structure, and because of the above note will not be
-            # valid for the final value
-            Value('length', lambda ctx: ctx.end_offset - ctx.start_offset)
+            # valid for the last item
+            Value('v_length', lambda ctx: ctx.end_offset - ctx.start_offset)
         )
     ),
     Padding(8),
@@ -111,13 +98,87 @@ GSTLFormat = Struct('gstl',
     )
 )
 
+def GBNLFormat(row_model=None):
+    return Struct('gbnl',
+        # note, footer struct size is 64
+        Pointer(lambda ctx: -64,
+            Struct('footer',
+                Anchor('a_start'),
+                Magic('GBNL'),
 
-GBNLFormat = Struct('gbnl',
-    Struct('footer',
-        Magic('GBNL'),
-        Padding(60)
+                # # 0x01 00 00 00
+                # Const(ULInt32('const_00'), 0x01),
+                # # 0x10 00 00 00
+                # Const(ULInt32('const_01'), 0x10),
+                # # 0x04 00 00 00
+                # Const(ULInt32('const_02'), 0x04),
+                # # 0x01 00 00 00
+                # Const(ULInt32('const_03'), 0x01),
+                # # 0x00 00 00 00
+                # Const(ULInt32('const_04'), 0x00),
+                Padding(20),
+
+                # @0x18
+                # possible string count?
+                ULInt32('row_count'),
+                # @0x1c
+                # seems to be row size
+                ULInt32('row_size'),
+                # @0x20
+                ULInt32('dynamic_02'),
+                # @0x24
+                # some other kind of offset
+                ULInt32('data_end_offset'),
+                # @0x28
+                # also possible string count
+                # almost certainly string count
+                ULInt32('str_count'),
+                # @0x2c
+                # string offset start
+                ULInt32('str_offset'),
+
+                Value('v_offset_diff', lambda ctx: ctx.str_offset - ctx.data_end_offset),
+                Value('v_expected_data_size', lambda ctx: ctx.row_count * ctx.row_size),
+                Value('v_data_size_diff', lambda ctx: ctx.data_end_offset - ctx.v_expected_data_size),
+
+                # # @0x30
+                # Const(ULInt32('const_05'), 0x04),
+                Padding(4),
+
+                # all 0x00
+                Padding(12)
+            )
+        ),
+
+        Array(lambda ctx: ctx.footer.row_count,
+            Struct('rows',
+                Embedded(row_model),
+                Padding(lambda ctx: max(0, ctx._.footer.row_size - row_model.sizeof()))
+            ) if row_model is not None else Padding(lambda ctx: ctx.footer.row_size)
+        ),
+
+        # this seems to be garbage data between the end of the data and start of the
+        # strings
+        Padding(lambda ctx: max(0, ctx.footer.v_offset_diff + ctx.footer.v_data_size_diff)),
+
+        Anchor('a_strings_start'),
+        Array(lambda ctx: ctx.footer.str_count,
+            CString('strings')
+        ),
+        Anchor('a_strings_end'),
+        # this seems to be garbage data between the end of the strings and the start
+        # of the footer
+        Padding(lambda ctx: ctx.footer.a_start - ctx.a_strings_end),
+
+        Anchor('a_expected_footer_start')
+        # the footer struct would go here if we didn't need to parse it first
     )
-)
 
 # SAVFormat = Struct('sav')
 # SAVSlotFormat = Struct('savslot')
+
+FORMATS = {
+    'gstl':     GSTLFormat,
+    'gbnl':     GBNLFormat,
+    'pac':      PACFormat,
+}

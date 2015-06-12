@@ -23,24 +23,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from nepugia import *
+__title__           = 'nepugia'
+__version__         = '0.0.1'
+__author__          = 'Alex Headley'
+__author_email__    = 'aheadley@waysaboutstuff.com'
+__license__         = 'The MIT License (MIT)'
+__copyright__       = 'Copyright 2015 Alex Headley'
+__url__             = 'https://github.com/aheadley/python-nepugia'
+__description__     = """
+Library for reading data from the Neptunia games
+""".strip()
 
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--format', choices=FORMATS)
-    parser.add_argument('-m', '--model', choices=ROW_MODELS, default='none')
-    parser.add_argument('file')
-
-    args = parser.parse_args()
-
-    with open(args.file) as file_handle:
-        if args.format == 'gbnl':
-            fmt_parser = FORMATS[args.format](ROW_MODELS[args.model])
-        else:
-            fmt_parser = FORMATS[args.format]
-
-        parsed_file = fmt_parser.parse_stream(file_handle)
-
-        print parsed_file
+from nepugia.formats import *
+from nepugia.gbin_row_models import *
