@@ -30,7 +30,9 @@ def FourByteUnion(name):
         Struct('u16',
             ULInt16('a'),
             ULInt16('b')
-        )
+        ),
+        # LFloat32('f32'),
+        Pass
     )
 
 # row_size=292
@@ -40,8 +42,8 @@ ItemModel = Struct('item',
     # almost certainly some kind of id, maybe correlates to something else
     # like a foreign key
     ULInt32('id'),
-    # unknown
-    ULInt32('dynamic_00'),
+    # str offset? seems to start at 0 and increase every time
+    ULInt32('name_offset'),
 
     # observed as all 0x00
     Padding(134),
@@ -49,29 +51,144 @@ ItemModel = Struct('item',
 
     # @0x92
     # yes, 3 of the exact same values in a row
-    FourByteUnion('const_00'),
-    FourByteUnion('const_01'),
-    FourByteUnion('const_02'),
-    FourByteUnion('const_03'),
+    ULInt32('flags_00'),
+    ULInt32('flags_01'),
+    ULInt32('flags_02'),
+    ULInt32('flags_03'),
 
-    FourByteUnion('dynamic_01'),
-    # probably some kind of bitfield/flag
-    FourByteUnion('dynamic_02'),
+    # always 0
+    Magic('\x00\x00'),
+    # small numbers, possibly levels
+    ULInt16('game_effect_00'),
 
-    # possibly a gameplay field (500, 2000, etc)
-    FourByteUnion('dynamic_03'),
+    # only seems to be 0, 1, or 99
+    ULInt16('max_count'),
+    # large numbers, buy price maybe?
+    ULInt16('game_effect_01'),
+
+    # possibly a character/use mask, usually 0, sometimes small (odd) numbers
+    ULInt16('game_effect_02'),
+    # large numbers, seems to always be less than game_effect_01
+    ULInt16('game_effect_03'),
 
     # observed as all 0x00
     Padding(110),
     # Magic('\0' * 110),
 
-    FourByteUnion('dynamic_05'),
-    FourByteUnion('dynamic_06')
+    # seems to usually be 0, otherwise is less than 10
+    ULInt16('dynamic_05'),
+    # possibly label ids
+    ULInt16('dynamic_06'),
+    # possibly string offsets
+    ULInt32('desc_offset'),
+
+    Pass
 )
 
-# note: ability model is very similar to item model
-# row_size=292
 AbilityModel = ItemModel
+
+CharaMonsterModel = Struct('charamonster',
+    # flag field, use unknown
+    ULInt32('flag_00'),
+    # this isn't certain, it seems to be unique but unconfirmed, and the rows
+    # are completely in this order, it jumps around
+    ULInt16('id'),
+    # use unknown, but numbers all seem to be low, generally less than 20
+    ULInt16('dynamic_01'),
+
+    String('name', 32, padchar='\x00'),
+
+    # always 0, except for CPUs/CPU candidate entries, where is small number
+    ULInt32('dynamic_10'),
+    ULInt16('flag_20'),
+    # use unknown, numbers start small and increase slowly
+    ULInt16('dynamic_11'),
+    Padding(2),
+    # larger numbers, generally 300-400 ish, small variance
+    ULInt16('dynamic_12'),
+    # very small numbers, less than 10
+    ULInt16('dynamic_13'),
+    # usually 0, sometimes larger 200ish
+    ULInt16('dynamic_14'),
+
+    # @56
+    # observed as all 0x00
+    Padding(24),
+
+    # unsure of order of agi/men/luk
+    Struct('stats',
+        ULInt32('hit_points'),
+        Padding(4),
+        ULInt32('skill_points'),
+        ULInt32('strength'),
+        ULInt32('vitality'),
+        ULInt32('intelligence'),
+        ULInt32('mentality'),
+        ULInt32('agility'),
+        ULInt32('technique'),
+        ULInt32('unknown_stat'),
+        ULInt32('luck'),
+        ULInt32('movement'),
+        Padding(4),
+        Struct('resist',
+            SLInt32('element_00'),
+            SLInt32('element_01'),
+            SLInt32('element_02'),
+            SLInt32('element_03')
+        ),
+
+        Pass
+    ),
+    Padding(20),
+
+    # @168
+    # only cpus/candidates have these, possibly voice/event data? or something
+    # with the cpu form
+    ULInt32('flag_10'),
+    Array(11, ULInt32('dynamic_50')),
+
+    Padding(152),
+
+    # @368
+    # this is not actually empty, just haven't decoded it yet
+    Padding(116),
+
+    # @484
+    # observed as all 0x00 in ~10 samples
+    Padding(736),
+
+    # @1220
+    # these always seem to be 0.07 and 0.15 respectively
+    # not sure what the use is
+    LFloat32('fp_00'),
+    LFloat32('fp_01'),
+
+    ULInt32('dynamic_20'),
+    ULInt32('dynamic_21'),
+    ULInt32('dynamic_22'),
+    ULInt32('dynamic_23'),
+    ULInt32('stat_guard_points'),
+
+    ULInt32('drop_exp'),
+    # @1252
+    ULInt32('drop_credits'),
+
+    # these are a total guess/gut feeling, should be x/100
+    ULInt32('drop_chance_any'),
+    ULInt32('drop_chance_item_00'),
+    ULInt32('drop_chance_item_01'),
+    ULInt32('drop_chance_item_02'),
+
+    # @0x04f8
+    ULInt32('drop_item_00'),
+    ULInt32('drop_item_01'),
+    ULInt32('drop_item_02'),
+    Magic('\x00' * 4),
+
+    # Value('v_drop_exp_bonus', lambda ctx: ctx.drop_exp * 1.3),
+
+    Pass
+)
 
 ROW_MODELS = {
     'none':         None,
@@ -79,4 +196,29 @@ ROW_MODELS = {
 
     'ability':      AbilityModel,
     'item':         ItemModel,
+    'charamonster': CharaMonsterModel,
 }
+
+# MODEL_ID_MAP = {
+#     2:          MuseumModel,
+#     3:          SQStoneSkillModel,
+#     4:          NepupediaModel,
+#     6:          DiscCombiModel,
+#     7:          AvatarModel,
+#     9:          BattleAiModel,
+#     12:         DiscItemModel,
+#     14:         BlogModel,
+#     15:         GalleryModel,
+#     16:         MotionPortraitModel,
+#     19:         HelpModel,
+#     20:         AreaModel,
+#     23:         CharaLevelUpModel,
+#     28:         AvatarMessageModel,
+#     45:         RemakeModel,
+#     68:         QuestModel,
+#     86:         SkillModel,
+#     113:        AbilityModel,
+#     341:        CharaMonsterModel,
+#     666:        SQDungeonModel,
+#     2533:       DungeonModel,
+# }

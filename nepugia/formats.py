@@ -31,23 +31,34 @@ from construct import *
 PACFormat = Struct('pac',
     Struct('header',
         Magic('DW_PACK\0'),
-        Padding(4),
+        # this is a guess based on minor_id
+        Const(ULInt32('major_id'), 0x00),
         ULInt32('entry_count'),
-        Padding(4)
+        # this seems to correlate to the sequential files, eg:
+        # GAME00000.pac has 0 here
+        # GAME00001.pac has 1 here
+        ULInt32('minor_id'),
+
+        Pass
     ),
     Array(lambda ctx: ctx.header.entry_count,
         Struct('entries',
-            Padding(4),
+            Magic('\x00\x00\x00\x00'),
             ULInt32('id'),
-            String('name', 260, padchar='\0'),
-            Padding(4),
+            String('name', 260, padchar='\x00'),
+            Magic('\x00\x00\x00\x00'),
             ULInt32('stored_size'),
             ULInt32('real_size'),
             # all files are compressed
             Const(ULInt32('compression_flag'), 1),
-            ULInt32('offset')
+            ULInt32('offset'),
+
+            Pass
         )
-    )
+    ),
+    Anchor('entry_list_end'),
+
+    Pass
 )
 
 # CPKFormat = Struct('cpk')
@@ -58,24 +69,34 @@ PACFormat = Struct('pac',
 GSTLFormat = Struct('gstl',
     Struct('header',
         Magic('GSTL'),
-        # set of 5 32bit ints [0x01 0x01 0x04 0x01 0x40]
-        # seems constant
-        Padding(20),
+
+        Magic('\x01\x00\x00\x00'),
+        Magic('\x10\x00\x00\x00'),
+        Magic('\x04\x00\x00\x00'),
+        Magic('\x01\x00\x00\x00'),
+        Magic('\x40\x00\x00\x00'),
+
         # number of str labels (ex: IDS_SOMETHING_OR_OTHER)
         # @0x18
         ULInt32('label_count'),
+
         # these are always observed to be 12, and 3 (respectively), use is
         # unknown (year and month of creation maybe?)
-        Const(ULInt32('const_00'), 0x0c),
-        Const(ULInt32('const_01'), 0x03),
+        Magic('\x0C\x00\x00\x00'),
+        Magic('\x03\x00\x00\x00'),
+
         # end of header maybe, of end of label list
         ULInt32('end'),
         # total count of labels and strings
         ULInt32('str_count'),
         # @0x2c
         ULInt32('str_offset'),
+
         # 0x04 then zeros till @0x44
-        Padding(20)
+        Magic('\x04\x00\x00\x00'),
+        Padding(16),
+
+        Pass
     ),
     # @0x44
     Array(lambda ctx: ctx.header.label_count,
@@ -89,7 +110,9 @@ GSTLFormat = Struct('gstl',
             # note that this is a computed value and not present in the
             # on-disk structure, and because of the above note will not be
             # valid for the last item
-            Value('v_length', lambda ctx: ctx.end_offset - ctx.start_offset)
+            Value('v_length', lambda ctx: ctx.end_offset - ctx.start_offset),
+
+            Pass
         )
     ),
     Padding(8),
@@ -116,7 +139,15 @@ def GBNLFormat(row_model=None):
                 # Const(ULInt32('const_03'), 0x01),
                 # # 0x00 00 00 00
                 # Const(ULInt32('const_04'), 0x00),
-                Padding(20),
+                # Padding(20),
+
+                Magic('\x01\x00\x00\x00'),
+                Magic('\x10\x00\x00\x00'),
+                Magic('\x04\x00\x00\x00'),
+                # this is 1 if there are strings at the end of the file, and 0
+                # otherwise. not sure why since there is also a str_count field
+                ULInt32('has_strings_flag'),
+                Magic('\x00\x00\x00\x00'),
 
                 # @0x18
                 # possible string count?
@@ -125,7 +156,8 @@ def GBNLFormat(row_model=None):
                 # seems to be row size
                 ULInt32('row_size'),
                 # @0x20
-                ULInt32('dynamic_02'),
+                # this is the id of the model to use for the rows
+                ULInt32('row_model_id'),
                 # @0x24
                 # some other kind of offset
                 ULInt32('data_end_offset'),
@@ -146,7 +178,9 @@ def GBNLFormat(row_model=None):
                 Padding(4),
 
                 # all 0x00
-                Padding(12)
+                Padding(12),
+
+                Pass
             )
         ),
 
@@ -163,15 +197,25 @@ def GBNLFormat(row_model=None):
 
         Anchor('a_strings_start'),
         Array(lambda ctx: ctx.footer.str_count,
-            CString('strings')
+            # CString('strings')
+            Struct('strings',
+                Anchor('start_offset'),
+                Value('v_relative_offset', lambda ctx: ctx.start_offset - ctx._.a_strings_start),
+                CString('value'),
+                Anchor('end_offset'),
+
+                Pass
+            )
         ),
         Anchor('a_strings_end'),
         # this seems to be garbage data between the end of the strings and the start
         # of the footer
         Padding(lambda ctx: ctx.footer.a_start - ctx.a_strings_end),
 
-        Anchor('a_expected_footer_start')
+        Anchor('a_expected_footer_start'),
         # the footer struct would go here if we didn't need to parse it first
+
+        Pass
     )
 
 # SAVFormat = Struct('sav')

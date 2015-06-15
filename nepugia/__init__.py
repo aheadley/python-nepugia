@@ -36,3 +36,13 @@ Library for reading data from the Neptunia games
 
 from nepugia.formats import *
 from nepugia.gbin_row_models import *
+
+def format_container(cntr):
+    return ' '.join('{}={:24s}'.format(k, _pprint_value(v)) for k, v in cntr.iteritems())
+
+def _pprint_value(value):
+    if hasattr(value, 'keys'):
+        return '{%s}' % format_container(value)
+    if hasattr(value, 'sort'):
+        return '[%s]' % ','.join(_pprint_value(i) for i in value)
+    return str(value)
