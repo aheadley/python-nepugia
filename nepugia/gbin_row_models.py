@@ -190,6 +190,54 @@ CharaMonsterModel = Struct('charamonster',
     Pass
 )
 
+RemakeModel = Struct('remake',
+    ULInt32('name_offset'),
+    ULInt16('id'),
+    ULInt16('category_id'),
+    ULInt16('plan_item_id'),
+    ULInt16('result_id'),
+
+    ULInt16('dynamic_00'),
+    Padding(4),
+    ULInt16('dynamic_01'),
+    ULInt16('dynamic_02'),
+    Padding(4),
+
+    # @26
+    ULInt16('flag_10'),
+    ULInt32('flag_11'),
+    Magic('\x01'), Padding(3),
+
+    ULInt16('dynamic_10'),
+    ULInt16('dynamic_11'),
+    ULInt16('dynamic_12'),
+    ULInt16('dynamic_13'),
+
+    # @44
+    Array(3,
+        Struct('components',
+            ULInt16('item_id'),
+            ULInt16('count')
+        )
+    ),
+    Padding(8),
+
+    # @64
+    ULInt32('dynamic_20'),
+    ULInt32('dynamic_21'),
+    ULInt32('dynamic_22'),
+    ULInt32('dynamic_23'),
+    Padding(16),
+
+    # @96
+    ULInt32('dynamic_30'),
+    ULInt32('dynamic_31'),
+    ULInt32('author_offset'),
+    ULInt32('desc_offset'),
+
+    Pass
+)
+
 ROW_MODELS = {
     'none':         None,
     # 'blob':         BlobModel,
@@ -197,6 +245,7 @@ ROW_MODELS = {
     'ability':      AbilityModel,
     'item':         ItemModel,
     'charamonster': CharaMonsterModel,
+    'remake':       RemakeModel,
 }
 
 # MODEL_ID_MAP = {
