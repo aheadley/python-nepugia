@@ -238,6 +238,93 @@ RemakeModel = Struct('remake',
     Pass
 )
 
+TreasureModel = Struct('treasure',
+    ULInt32('id'),
+    Array(3, Struct('item',
+        ULInt32('id'),
+        ULInt32('drop_chance'),
+        ULInt32('flag_00'),
+        ULInt32('flag_01')
+    )),
+
+    Pass
+)
+
+DungeonModel = Struct('dungeon',
+    ULInt16('id'),
+    # this is related to the environment of the dungeon in some way
+    ULInt16('env_effect_00'),
+    Padding(6),
+    # also related to the environment of the dungeon somehow, guessing the icon
+    # based on what it's shared with
+    ULInt16('icon_id'),
+    # the world map seems to use a coordinate system of:
+    #  x=left<>right [0,~1600]
+    #  y=top<>bottom [0,~1600]
+    ULInt32('map_pos_x'),
+    ULInt32('map_pos_y'),
+    # always seems to be a multiple of 100
+    ULInt16('dynamic_02'),
+    ULInt16('dynamic_03'),
+
+    # @24
+    ULInt32('name_offset'),
+
+    ULInt16('dynamic_10'),
+    ULInt16('dynamic_11'),
+    ULInt16('dynamic_12'),
+    Padding(18),
+
+    # @52
+    Array(10, ULInt32('dynamic_41')),
+    Array(5, Struct('treasure_boxes',
+        ULInt32('id'),
+        Array(3, Struct('drops',
+            ULInt32('item_id'),
+            ULInt32('drop_chance'),
+            ULInt32('flag_00'),
+            ULInt32('flag_01'),
+        ))
+    )),
+
+    # @352
+    # array totals 4860 bytes
+    # [0]= regular
+    # [1]= +add enemies
+    # [2]= +change dungeon
+    Array(3, Struct('monster_spawn_sets',
+        Array(15, Struct('monster_spawns',
+            # always 0x01 00
+            Padding(2),
+            ULInt16('dynamic_23'),
+            Padding(2),
+
+            # Array(28, ULInt16('dynamic_20')),
+            Padding(56),
+
+            Array(4, Struct('monsters',
+                ULInt16('id'),
+                ULInt16('dynamic_21'),
+                ULInt16('dynamic_22'),
+                Padding(2)
+            )),
+            # always 0x00
+            Padding(14)
+        ))
+    )),
+
+    # @5212
+    # array totals 2340 bytes
+    Array(3, Struct('unknown_block_01',
+        Array(65, ULInt32('dynamic_30')),
+        Padding(520)
+    )),
+    ULInt32('dynamic_99'),
+    Padding(16),
+
+    Pass
+)
+
 ROW_MODELS = {
     'none':         None,
     # 'blob':         BlobModel,
@@ -246,6 +333,8 @@ ROW_MODELS = {
     'item':         ItemModel,
     'charamonster': CharaMonsterModel,
     'remake':       RemakeModel,
+    'treasure':     TreasureModel,
+    'dungeon':      DungeonModel,
 }
 
 # MODEL_ID_MAP = {
