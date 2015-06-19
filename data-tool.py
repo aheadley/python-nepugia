@@ -31,6 +31,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', choices=FORMATS)
     parser.add_argument('-m', '--model', choices=ROW_MODELS, default='none')
+    parser.add_argument('-o', '--one-line', action='store_true', default=False)
     parser.add_argument('files', nargs='+')
 
     args = parser.parse_args()
@@ -44,4 +45,7 @@ if __name__ == '__main__':
 
             parsed_file = fmt_parser.parse_stream(file_handle)
             print fn
-            print parsed_file
+            if args.one_line:
+                print format_container(parsed_file)
+            else:
+                print parsed_file

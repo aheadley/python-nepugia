@@ -48,6 +48,6 @@ if __name__ == '__main__':
             except OSError:
                 pass
 
-            pac_file.seek(pacfile.entry_list_end + entry.offset)
+            pac_file.seek(pacfile.a_entry_list_end + entry.offset)
             with open(target_path, 'w') as target_file:
                 target_file.write(pac_file.read(entry.stored_size))
