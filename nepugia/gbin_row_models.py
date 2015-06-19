@@ -363,6 +363,12 @@ QuestModel = Struct('quest',
     )),
 
     # @76
+    # faction IDs:
+    #   0:  Planeptune
+    #   1:  Leanbox
+    #   2:  Lastation
+    #   3:  Lowee
+    #   4:  Arfoire/Others (the bad guys)
     ULInt8('rep_gain_faction_id'),
     ULInt8('rep_loss_faction_id'),
     ULInt16('rep_flux_value'),
@@ -379,16 +385,57 @@ QuestModel = Struct('quest',
     Padding(96),
 
     # @192
-    ULInt32('sponser_offset'),
-    ULInt32('client_offset'),
-    ULInt32('comment_offset'),
+    SLInt32('sponser_offset'),
+    SLInt32('client_offset'),
+    SLInt32('comment_offset'),
+
+    Pass
+)
+
+AvatarModel = Struct('avatar',
+    ULInt16('id'),
+
+    # this seems to be an id to another table (foreign key), or maybe a
+    # sprite/model id
+    ULInt16('dynamic_00'),
+
+    ULInt32('name_offset'),
+
+    # these appear to be related to whether the avatar is actually a character
+    # or a system thing (like "Guild", "Shop", etc)
+    ULInt32('dynamic_10'),
+    ULInt32('dynamic_11'),
+
+    ULInt32('alt_name_offset'),
+
+    Pass
+)
+
+AvatarMessageModel = Struct('avtmsg',
+    ULInt32('id'),
+
+    # this is bizzare. it's always -1, except for a single row where it is the
+    # offset to a single character string ("1")
+    SLInt32('one_offset'),
+
+    Array(5, ULInt32('message_offsets')),
+
+    ULInt32('dynamic_10'),
+    Padding(16),
+
+    # @48
+    Array(3, Struct('rewards',
+        ULInt32('count'),
+        ULInt32('item_id'),
+
+        Pass
+    )),
 
     Pass
 )
 
 ROW_MODELS = {
     'none':         None,
-    # 'blob':         BlobModel,
 
     'ability':      AbilityModel,
     'item':         ItemModel,
@@ -397,6 +444,8 @@ ROW_MODELS = {
     'treasure':     TreasureModel,
     'dungeon':      DungeonModel,
     'quest':        QuestModel,
+    'avatar':       AvatarModel,
+    'avtmsg':       AvatarMessageModel,
 }
 
 # MODEL_ID_MAP = {
