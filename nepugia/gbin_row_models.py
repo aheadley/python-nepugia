@@ -24,16 +24,7 @@
 
 from construct import *
 
-def FourByteUnion(name):
-    return Union(name,
-        ULInt32('u32'),
-        Struct('u16',
-            ULInt16('a'),
-            ULInt16('b')
-        ),
-        # LFloat32('f32'),
-        Pass
-    )
+from nepugia.structs import *
 
 # row_size=292
 ItemModel = Struct('item',
@@ -115,30 +106,7 @@ CharaMonsterModel = Struct('charamonster',
     # observed as all 0x00
     Padding(24),
 
-    # unsure of order of agi/men/luk
-    Struct('stats',
-        ULInt32('hit_points'),
-        Padding(4),
-        ULInt32('skill_points'),
-        ULInt32('strength'),
-        ULInt32('vitality'),
-        ULInt32('intelligence'),
-        ULInt32('mentality'),
-        ULInt32('agility'),
-        ULInt32('technique'),
-        ULInt32('unknown_stat'),
-        ULInt32('luck'),
-        ULInt32('movement'),
-        Padding(4),
-        Struct('resist',
-            SLInt32('element_00'),
-            SLInt32('element_01'),
-            SLInt32('element_02'),
-            SLInt32('element_03')
-        ),
-
-        Pass
-    ),
+    CharStats,
     Padding(20),
 
     # @168
@@ -425,11 +393,34 @@ AvatarMessageModel = Struct('avtmsg',
 
     # @48
     Array(3, Struct('rewards',
+        # this is probably not actually the count, since it would mean multiple
+        # copies of plans are given
         ULInt32('count'),
         ULInt32('item_id'),
 
         Pass
     )),
+
+    Pass
+)
+
+AvatarDecModel = Struct('avtdec',
+    Array(5, Struct('unknown_block_00',
+        ULInt32('dynamic_00'),
+        ULInt32('dynamic_01'),
+        ULInt32('dynamic_02'),
+        ULInt32('dynamic_03'),
+        SLInt32('dynamic_04'),
+
+        Pass
+    )),
+
+    # this definitely seems to be some kind of ID but is probably not the
+    # primary key
+    ULInt32('id'),
+    ULInt16('map_pos_x'),
+    ULInt16('map_pos_y'),
+    ULInt32('required_item_id'),
 
     Pass
 )
@@ -446,6 +437,7 @@ ROW_MODELS = {
     'quest':        QuestModel,
     'avatar':       AvatarModel,
     'avtmsg':       AvatarMessageModel,
+    'avtdec':       AvatarDecModel,
 }
 
 # MODEL_ID_MAP = {
