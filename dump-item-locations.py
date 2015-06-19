@@ -52,6 +52,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--no-change-dungeon', default=False, action='store_true')
     parser.add_argument('db_dir')
     parser.add_argument('output_file')
 
@@ -69,7 +70,7 @@ if __name__ == '__main__':
 
         write('| Name | HP | Drops | XP | Credits |')
         write('|---|---|---|---|---|')
-        for dungeon in dungeon_db.rows[1:-1]: #skip the first one and last because they are garbage
+        for dungeon in dungeon_db.rows: #skip the first one and last because they are garbage
             normal_monster_ids = uniq(m.id \
                 for spawn in dungeon.monster_spawn_sets[0].monster_spawns \
                     for m in spawn.monsters)
@@ -101,12 +102,15 @@ if __name__ == '__main__':
                         monster.name, monster.stats.hit_points, ', '.join(drop_items),
                         monster.drop_exp, monster.drop_credits)
 
-            if change_monster_ids:
+            if change_monster_ids and not args.no_change_dungeon:
                 write('| **{} (Change Dungeon)** |---|---|---|---|', lookup_string(dungeon.name_offset, dungeon_db))
 
-                for monster in sorted((lookup_by_id(mid, monster_db.rows) for mid in change_monster_ids), key=lambda m: m.stats.hit_points):
-                    drop_items = ['[%s]' % lookup_string(lookup_by_id(iid, item_db.rows).name_offset, item_db) \
-                        for iid in uniq([monster.drop_item_00, monster.drop_item_01, monster.drop_item_02])]
-                    write('| {} | {} | {} | {} | {} |',
-                        monster.name, monster.stats.hit_points, ', '.join(drop_items),
-                        monster.drop_exp, monster.drop_credits)
+                try:
+                    for monster in sorted((lookup_by_id(mid, monster_db.rows) for mid in change_monster_ids), key=lambda m: m.stats.hit_points):
+                        drop_items = ['[%s]' % lookup_string(lookup_by_id(iid, item_db.rows).name_offset, item_db) \
+                            for iid in uniq([monster.drop_item_00, monster.drop_item_01, monster.drop_item_02])]
+                        write('| {} | {} | {} | {} | {} |',
+                            monster.name, monster.stats.hit_points, ', '.join(drop_items),
+                            monster.drop_exp, monster.drop_credits)
+                except IndexError as err:
+                    sys.stderr.write(str(err) + '\n')

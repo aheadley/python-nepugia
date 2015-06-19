@@ -31,16 +31,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', choices=FORMATS)
     parser.add_argument('-m', '--model', choices=ROW_MODELS, default='none')
-    parser.add_argument('file')
+    parser.add_argument('files', nargs='+')
 
     args = parser.parse_args()
 
-    with open(args.file) as file_handle:
-        if args.format == 'gbnl':
-            fmt_parser = FORMATS[args.format](ROW_MODELS[args.model])
-        else:
-            fmt_parser = FORMATS[args.format]
+    for fn in args.files:
+        with open(fn) as file_handle:
+            if args.format == 'gbnl':
+                fmt_parser = FORMATS[args.format](ROW_MODELS[args.model])
+            else:
+                fmt_parser = FORMATS[args.format]
 
-        parsed_file = fmt_parser.parse_stream(file_handle)
-
-        print parsed_file
+            parsed_file = fmt_parser.parse_stream(file_handle)
+            print fn
+            print parsed_file

@@ -325,6 +325,67 @@ DungeonModel = Struct('dungeon',
     Pass
 )
 
+QuestModel = Struct('quest',
+    ULInt32('id'),
+    ULInt32('name_offset'),
+
+    BitStruct('type_flags',
+        # there are quite a few flags in here that i am ignoring
+        Padding(5),
+        Flag('non_repeatable'),
+        Flag('request_kill'),
+        Flag('request_item'),
+
+        Padding(8),
+
+        Pass
+    ),
+    Padding(2),
+
+    Array(4, Struct('request_objects',
+        ULInt32('id'),
+        ULInt32('count'),
+
+        Pass
+    )),
+
+    # @44
+    ULInt32('reward_credits'),
+    # i have no idea what this is used for, at all
+    ULInt8('dynamic_10'),
+    Padding(3),
+
+    Array(3, Struct('rewards',
+        ULInt32('id'),
+        ULInt32('count'),
+
+        Pass
+    )),
+
+    # @76
+    ULInt8('rep_gain_faction_id'),
+    ULInt8('rep_loss_faction_id'),
+    ULInt16('rep_flux_value'),
+
+    # this only seems to be used for colliseum quests
+    ULInt16('dungeon_id'),
+    ULInt16('dynamic_30'),
+    ULInt16('dynamic_31'),
+    ULInt16('dynamic_32'),
+    Padding(8),
+
+    # @96
+    # there is more colliseum-only data in here concerning the enemy monsters
+    Padding(96),
+
+    # @192
+    ULInt32('sponser_offset'),
+    ULInt32('client_offset'),
+    ULInt32('comment_offset'),
+
+    Pass
+)
+
 ROW_MODELS = {
     'none':         None,
     # 'blob':         BlobModel,
@@ -335,6 +396,7 @@ ROW_MODELS = {
     'remake':       RemakeModel,
     'treasure':     TreasureModel,
     'dungeon':      DungeonModel,
+    'quest':        QuestModel,
 }
 
 # MODEL_ID_MAP = {
