@@ -225,17 +225,70 @@ RB2_SAVFormat = Struct('rb2_sav',
 
         Padding(8),
 
-        ULInt32('unknown_00'),
+        ULInt32('save_count'),
         Padding(4),
         Magic('\xD0\xB0\x0C\x00'),
+        # only seems to be 3, 7, or 10
         ULInt32('unknown_01'),
         LFloat32('cursor_pos_x'),
         LFloat32('cursor_pos_y'),
 
-        Padding(3784),
+        # Padding(3784),
+        Padding(3548),
+        # @3584
+
+        Struct('game_stats',
+            Padding(60),
+
+            ULInt32('battle_count'),
+            ULInt32('kill_count'),
+            # suspect one of these is per-cycle
+            ULInt32('cycle_kill_count'),
+            ULInt32('ko_count'),
+            ULInt32('escape_count'),
+            ULInt32('hdd_activation_count'),
+            ULInt32('max_damage_dealt'),
+            ULInt32('max_combo_dealt'),
+
+            # always seems to be 0
+            Padding(4),
+
+            ULInt32('total_damage_dealt'),
+
+            Padding(4),
+
+            ULInt32('total_damage_taken'),
+
+            Padding(12),
+            Array(4, SLInt32('unknown_12')),
+
+            ULInt32('jump_count'),
+
+            Padding(4),
+            ULInt32('unknown_14'),
+
+            ULInt32('rush_attack_count'),
+            ULInt32('power_attack_count'),
+            ULInt32('break_attack_count'),
+
+            Array(5, SLInt32('unknown_15')),
+
+            ULInt32('credits_spent'),
+            # Array(4, SLInt16('unknown_18')),
+            Padding(8),
+            ULInt32('credits_gained'),
+            Padding(4),
+            ULInt32('credits_spent2'),
+
+            Padding(16),
+            ULInt32('quests_completed_count'),
+            Padding(12),
+
+            Pass
+        ),
+        # Array(59, SLInt32('unknown_10')),
 
         # @3820
-        # String('chapter_title', 48, padchar='\x00'),
         CString('chapter_title'),
         Padding(lambda ctx: max(48 - (len(ctx.chapter_title)+1), 0)),
 
@@ -253,8 +306,8 @@ RB2_SAVFormat = Struct('rb2_sav',
         Padding(8),
         String('name', 32, padchar='\x00'),
 
-        # Array(3, ULInt16('unknown_11')),
-        Padding(6),
+        ULInt32('xp_total'),
+        ULInt16('unknown_22'),
         ULInt16('level'),
         # Array(4, ULInt16('unknown_12')),
         Padding(8),
@@ -300,8 +353,38 @@ RB2_SAVFormat = Struct('rb2_sav',
 
         Pass
     )),
+    # @32224
 
-    Padding(524104),
+    Padding(19564),
+    # @51788
+    Struct('inventory',
+        ULInt32('filled_slot_count'),
+        Array(3000, Struct('slots',
+            ULInt16('item_id'),
+            ULInt8('count'),
+            BitStruct('flags',
+                Padding(5),
+                # this one seems exclusive to plans, but not all plans have it
+                Flag('bitflag_00'),
+                # this seems to be related to dlc content
+                Flag('bitflag_01'),
+                # all plans seem to have this, but is not exclusive to plans
+                Flag('bitflag_02'),
+
+                Pass
+            ),
+
+            Pass
+        )),
+
+        # @63792
+        ULInt32('current_credits'),
+
+        Pass
+    ),
+
+
+    Padding(492532),
 
     # @556328
     # Array(2420, ULInt16('unknown_80')),
