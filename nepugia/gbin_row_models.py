@@ -405,7 +405,7 @@ AvatarMessageModel = Struct('avtmsg',
 )
 
 AvatarDecModel = Struct('avtdec',
-    Array(5, Struct('unknown_block_00',
+    Array(4, Struct('unknown_block_00',
         ULInt32('dynamic_00'),
         ULInt32('dynamic_01'),
         ULInt32('dynamic_02'),
@@ -415,9 +415,16 @@ AvatarDecModel = Struct('avtdec',
         Pass
     )),
 
+    ULInt32('dynamic_10'),
+    ULInt32('dynamic_11'),
+    ULInt32('dynamic_12'),
+    # this is almost always 9 except for a few special cases
+    ULInt32('dynamic_13'),
+    SLInt32('avatar_id'),
+
     # this definitely seems to be some kind of ID but is probably not the
     # primary key
-    ULInt32('id'),
+    ULInt32('avtmsg_id'),
     ULInt16('map_pos_x'),
     ULInt16('map_pos_y'),
     ULInt32('required_item_id'),

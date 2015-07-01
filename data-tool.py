@@ -31,6 +31,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', choices=FORMATS)
     parser.add_argument('-m', '--model', choices=ROW_MODELS, default='none')
+    parser.add_argument('-r', '--rows', action='store_true', default=False)
     parser.add_argument('-o', '--one-line', action='store_true', default=False)
     parser.add_argument('files', nargs='+')
 
@@ -46,6 +47,10 @@ if __name__ == '__main__':
             parsed_file = fmt_parser.parse_stream(file_handle)
             print fn
             if args.one_line:
-                print format_container(parsed_file)
+                if args.format == 'gbnl' and args.rows:
+                    for row in parsed_file.rows:
+                        print format_container(row)
+                else:
+                    print format_container(parsed_file)
             else:
                 print parsed_file

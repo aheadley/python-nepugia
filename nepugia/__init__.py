@@ -46,3 +46,8 @@ def _pprint_value(value):
     if hasattr(value, 'sort'):
         return '[%s]' % ','.join(_pprint_value(i) for i in value)
     return str(value)
+
+def gbnl_create_strings_db(gbnl_container):
+    if gbnl_container.footer.has_strings_flag:
+        gbnl_container.strings_db = {s.v_relative_offset: s.value for s in gbnl_container.strings}
+    return gbnl_container
