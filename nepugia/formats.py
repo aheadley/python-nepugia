@@ -41,8 +41,6 @@ PACFormat = Struct('pac',
         # GAME00000.pac has 0 here
         # GAME00001.pac has 1 here
         ULInt32('minor_id'),
-
-        Pass
     ),
     Array(lambda ctx: ctx.header.entry_count,
         Struct('entries',
@@ -61,8 +59,6 @@ PACFormat = Struct('pac',
         )
     ),
     Anchor('a_entry_list_end'),
-
-    Pass
 )
 
 # The format of the string storage format (the *.gstr files). This is where
@@ -97,8 +93,6 @@ GSTLFormat = Struct('gstl',
         # 0x04 then zeros till @0x44
         Magic('\x04\x00\x00\x00'),
         Padding(16),
-
-        Pass
     ),
     # @0x44
     Array(lambda ctx: ctx.header.label_count,
@@ -113,8 +107,6 @@ GSTLFormat = Struct('gstl',
             # on-disk structure, and because of the above note will not be
             # valid for the last item
             Value('v_length', lambda ctx: ctx.end_offset - ctx.start_offset),
-
-            Pass
         )
     ),
     Padding(8),
@@ -181,8 +173,6 @@ def GBNLFormat(row_model=None):
 
                 # all 0x00
                 Padding(12),
-
-                Pass
             )
         ),
 
@@ -205,8 +195,6 @@ def GBNLFormat(row_model=None):
                 Value('v_relative_offset', lambda ctx: ctx.start_offset - ctx._.a_strings_start),
                 CString('value'),
                 Anchor('end_offset'),
-
-                Pass
             )
         ),
         Anchor('a_strings_end'),
@@ -216,8 +204,6 @@ def GBNLFormat(row_model=None):
 
         Anchor('a_expected_footer_start'),
         # the footer struct would go here if we didn't need to parse it first
-
-        Pass
     )
 
 RB2_SAVFormat = Struct('rb2_sav',
@@ -285,16 +271,12 @@ RB2_SAVFormat = Struct('rb2_sav',
             Padding(16),
             ULInt32('quests_completed_count'),
             Padding(12),
-
-            Pass
         ),
         # Array(59, SLInt32('unknown_10')),
 
         # @3820
         CString('chapter_title'),
         Padding(lambda ctx: max(48 - (len(ctx.chapter_title)+1), 0)),
-
-        Pass
     ),
 
     Padding(20),
@@ -347,13 +329,9 @@ RB2_SAVFormat = Struct('rb2_sav',
             ULInt32('cpu_s_id'),
             ULInt32('cpu_w_id'),
             ULInt32('cpu_l_id'),
-
-            Pass
         ),
 
         Padding(1072),
-
-        Pass
     )),
     # @32224
 
@@ -372,17 +350,11 @@ RB2_SAVFormat = Struct('rb2_sav',
                 Flag('bitflag_01'),
                 # all plans seem to have this, but is not exclusive to plans
                 Flag('bitflag_02'),
-
-                Pass
             ),
-
-            Pass
         )),
 
         # @63792
         ULInt32('current_credits'),
-
-        Pass
     ),
 
 
@@ -408,13 +380,9 @@ RB2_SAVFormat = Struct('rb2_sav',
         Padding(8),
         Magic('\xFF\xCB\xE5\x00'),
         Array(4, ULInt16('unknown_99')),
-
-        Pass
     ),
 
     Padding(4),
-
-    Pass
 )
 
 SAVSlotFormat = Struct('savslot',
@@ -444,11 +412,7 @@ SAVSlotFormat = Struct('savslot',
         ULInt16('second'),
 
         ULInt32('unknown_00'),
-
-        Pass
     ),
-
-    Pass
 )
 
 FORMATS = {
