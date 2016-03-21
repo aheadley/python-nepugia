@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from nepugia import *
+from nepugia.formats import PACFormat
 
 if __name__ == '__main__':
     import os.path
@@ -48,6 +48,5 @@ if __name__ == '__main__':
             except OSError:
                 pass
 
-            pac_file.seek(pacfile.a_entry_list_end + entry.offset)
             with open(target_path, 'w') as target_file:
-                target_file.write(pac_file.read(entry.stored_size))
+                target_file.write(entry.v_data_handle(pac_file).read())

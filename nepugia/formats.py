@@ -24,7 +24,8 @@
 
 from construct import *
 
-from nepugia.structs import CharStats
+from .structs import CharStats
+from .file_io import FileInFile
 
 # The format of the packed file container. Nearly all game files are stored
 # in side this container format. Note that the compression method is not yet
@@ -55,7 +56,8 @@ PACFormat = Struct('pac',
             Const(ULInt32('compression_flag'), 1),
             ULInt32('offset'),
 
-            Pass
+            Value('v_data_handle', lambda ctx: lambda handle:
+                FileInFile(handle, ctx._.a_entry_list_end + ctx.offset, ctx.stored_size)),
         )
     ),
     Anchor('a_entry_list_end'),
