@@ -54,12 +54,36 @@ PACFormat = Struct('pac',
             Const(ULInt32('compression_flag'), 1),
             ULInt32('offset'),
 
+            If(lambda ctx: ctx.compression_flag,
+                OnDemand(Pointer(lambda ctx: ctx._.a_entry_list_end + ctx.offset,
+                    Struct('chunk_set',
+                        Struct('header',
+                            # Magic('\x34\x12\x00\x00'),
+                            Const(ULInt32('magic'), 0x1234),
+                            ULInt32('chunk_count'),
+                            ULInt32('chunk_size'),
+                            ULInt32('header_size'),
+                        ),
+                        Array(lambda ctx: ctx.header.chunk_count, Struct('chunks',
+                            ULInt32('real_size'),
+                            ULInt32('stored_size'),
+                            ULInt32('offset'),
+
+                            Value('v_data_handle', lambda ctx: lambda handle:
+                                FileInFile(handle, ctx._.header.header_size + ctx.offset, ctx.stored_size)),
+                        )),
+                        Anchor('a_chunk_list_end'),
+                    ),
+                )),
+            ),
+
             Value('v_data_handle', lambda ctx: lambda handle:
                 FileInFile(handle, ctx._.a_entry_list_end + ctx.offset, ctx.stored_size)),
         )
     ),
     Anchor('a_entry_list_end'),
 )
+
 
 # The format of the string storage format (the *.gstr files). This is where
 # the bulk of localization efforts would go, though there are localized strings

@@ -24,24 +24,31 @@
 # SOFTWARE.
 
 from nepugia.formats import PACFormat
+from nepugia.file_io import chunked_copy, FileInFile
+from nepugia.huffmanc import HuffmanCoding
 
 if __name__ == '__main__':
     import os.path
     import sys
+    import hashlib
+    from StringIO import StringIO
 
     pac_filename = sys.argv[1]
     target_dir = sys.argv[2]
 
     get_target_path = lambda p: os.path.join(target_dir, p.replace('\\', '/'))
+    hc = HuffmanCoding()
 
-    with open(pac_filename) as pac_file:
-        pacfile = PACFormat.parse_stream(pac_file)
+    with open(pac_filename) as pac_handle:
+        pac_data = PACFormat.parse_stream(pac_handle)
 
-        print pacfile.header
+        print pac_data.header
 
-        for entry in pacfile.entries:
+        for entry in pac_data.entries:
             target_path = get_target_path(entry.name)
-            print '%s -> %s' % (entry.name, target_path)
+
+            print '[{e.stored_size:08d}] {e.name} +> [{e.real_size:08d}] {t_path}'.format(e=entry, t_path=target_path)
+            # print '%s -> %s' % (entry.name, target_path)
 
             try:
                 os.makedirs(os.path.dirname(target_path))
@@ -49,4 +56,19 @@ if __name__ == '__main__':
                 pass
 
             with open(target_path, 'w') as target_file:
-                target_file.write(entry.v_data_handle(pac_file).read())
+                with entry.v_data_handle(pac_handle) as entry_handle:
+                    if entry.compression_flag:
+                        chunk_set = entry.chunk_set.value
+                        for i, chunk in enumerate(chunk_set.chunks):
+                            print '++> decompressing chunk {c_id:03d} / {c_count:03d} [{c.stored_size:08d}] => [{c.real_size:08d}]'.format(
+                                c_id=i+1,
+                                c_count=chunk_set.header.chunk_count,
+                                c=chunk)
+                            with chunk.v_data_handle(entry_handle) as chunk_handle:
+                                try:
+                                    hc.decompress_stream(
+                                        chunk_handle, target_file, chunk.real_size)
+                                except Exception as err:
+                                    print err
+                    else:
+                        chunked_copy(entry_handle.read, target_file.write)

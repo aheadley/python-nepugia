@@ -119,6 +119,9 @@ class FileInFile(object):
             mode=self.mode,
             )
 
+    def __len__(self):
+        return self._size
+
     @only_if_open
     def tell(self):
         return self._position
