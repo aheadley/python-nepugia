@@ -23,32 +23,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
+
 from nepugia.formats import PACFormat
-from nepugia.file_io import chunked_copy, FileInFile
-from nepugia.huffmanc import HuffmanCoding
+from nepugia.util.file_io import chunked_copy, FileInFile
+from nepugia.compression.huffmanc import HuffmanCoding
+import nepugia
+
+# logger = logging.getLogger(__name__)
+logger = nepugia.logger
 
 if __name__ == '__main__':
     import os.path
     import sys
-    import hashlib
-    from StringIO import StringIO
 
     pac_filename = sys.argv[1]
     target_dir = sys.argv[2]
 
     get_target_path = lambda p: os.path.join(target_dir, p.replace('\\', '/'))
-    hc = HuffmanCoding()
+
+    logger.info('Opening PAC file: %s', pac_filename)
 
     with open(pac_filename) as pac_handle:
         pac_data = PACFormat.parse_stream(pac_handle)
+        hc = HuffmanCoding()
 
-        print pac_data.header
+        logger.info('Parsed %03d entries', len(pac_data.entries))
 
         for entry in pac_data.entries:
             target_path = get_target_path(entry.name)
 
-            print '[{e.stored_size:08d}] {e.name} +> [{e.real_size:08d}] {t_path}'.format(e=entry, t_path=target_path)
-            # print '%s -> %s' % (entry.name, target_path)
+            logger.debug('Found entry: id=%03d offset=0x%08X compressed=%d',
+                entry.id, entry.offset, entry.compression_flag)
+            logger.info('Unpacking entry "%s" @ %06d bytes to "%s" @ %06d bytes',
+                entry.name, entry.stored_size, target_path, entry.real_size)
 
             try:
                 os.makedirs(os.path.dirname(target_path))
@@ -56,15 +64,17 @@ if __name__ == '__main__':
                 pass
 
             with open(target_path, 'w') as target_file:
-                with entry.v_data_handle(pac_handle) as entry_handle:
+                with entry.vf_open(pac_handle) as entry_handle:
                     if entry.compression_flag:
                         chunk_set = entry.chunk_set.value
+                        logger.info('Parsed %03d chunks of %08d bytes @ offset=0x%08X',
+                            chunk_set.header.chunk_count, chunk_set.header.chunk_size, chunk_set.header.header_size)
+
                         for i, chunk in enumerate(chunk_set.chunks):
-                            print '++> decompressing chunk {c_id:03d} / {c_count:03d} [{c.stored_size:08d}] => [{c.real_size:08d}]'.format(
-                                c_id=i+1,
-                                c_count=chunk_set.header.chunk_count,
-                                c=chunk)
-                            with chunk.v_data_handle(entry_handle) as chunk_handle:
+                            logger.info('Decompressing chunk #%03d @ %06d -> %06d bytes',
+                                i, chunk.stored_size, chunk.real_size)
+
+                            with chunk.vf_open(entry_handle) as chunk_handle:
                                 try:
                                     hc.decompress_stream(
                                         chunk_handle, target_file, chunk.real_size)

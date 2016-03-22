@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from nepugia import *
+from nepugia.formats import GBNLFormat
 
 if __name__ == '__main__':
     import sys

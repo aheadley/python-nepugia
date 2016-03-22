@@ -24,8 +24,6 @@
 
 from construct import *
 
-from nepugia.structs import *
-
 # row_size=292
 ItemModel = Struct('item',
     # looks like some kind of bit field/flags

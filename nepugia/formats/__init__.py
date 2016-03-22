@@ -1,4 +1,3 @@
-#!/bin/env python
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -23,32 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__title__           = 'nepugia'
-__version__         = '0.0.2'
-__author__          = 'Alex Headley'
-__author_email__    = 'aheadley@waysaboutstuff.com'
-__license__         = 'The MIT License (MIT)'
-__copyright__       = 'Copyright 2015 Alex Headley'
-__url__             = 'https://github.com/aheadley/python-nepugia'
-__description__     = """
-Library for reading data from the Neptunia games
-""".strip()
+from .gbnl import GBNLFormat
+from .gstl import GSTLFormat
+from .pac import PACFormat
+from .save import RB2_SAVFormat, SAVSlotFormat
 
-import logging
-import os
-
-from nepugia.formats import *
-from nepugia.util import LOG_FORMAT, NullHandler, NEPUGIA_DEBUG
-
-logger = logging.getLogger(__name__)
-
-if NEPUGIA_DEBUG:
-    _log_handler = logging.StreamHandler()
-    _log_handler.setFormatter(LOG_FORMAT)
-    _log_level = logging.DEBUG
-else:
-    _log_handler = NullHandler()
-    _log_level = logging.INFO
-
-logger.setLevel(_log_level)
-logger.addHandler(_log_handler)
+__all__ = ['GBNLFormat', 'GSTLFormat', 'PACFormat', 'RB2_SAVFormat', 'SAVSlotFormat']

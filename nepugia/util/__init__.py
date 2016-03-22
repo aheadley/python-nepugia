@@ -22,40 +22,54 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from construct import *
+import os
+import logging
+try:
+    # py2
+    from cStringIO import StringIO
+except ImportError:
+    try:
+        # py2 on some platform without cStringIO
+        from StringIO import StringIO
+    except ImportError:
+        # py3k
+        from io import StringIO
+
+from construct import Union, ULInt32, Struct, ULInt16
 
 def FourByteUnion(name):
     return Union(name,
         ULInt32('u32'),
         Struct('u16',
             ULInt16('a'),
-            ULInt16('b')
+            ULInt16('b'),
         ),
-        # LFloat32('f32'),
-        Pass
     )
 
-# unsure of order of agi/men/luk
-CharStats = Struct('stats',
-    ULInt32('hit_points'),
-    Padding(4),
-    ULInt32('skill_points'),
-    ULInt32('strength'),
-    ULInt32('vitality'),
-    ULInt32('intelligence'),
-    ULInt32('mentality'),
-    ULInt32('agility'),
-    ULInt32('technique'),
-    Padding(4),
-    ULInt32('luck'),
-    ULInt32('movement'),
-    Padding(4),
-    Struct('resist',
-        SLInt32('element_00'),
-        SLInt32('element_01'),
-        SLInt32('element_02'),
-        SLInt32('element_03')
-    ),
+def format_container(cntr):
+    return ' '.join('{}={:24s}'.format(k, _pprint_value(v)) for k, v in cntr.iteritems())
 
-    Pass
-)
+def _pprint_value(value):
+    if hasattr(value, 'keys'):
+        return '{%s}' % format_container(value)
+    if hasattr(value, 'sort'):
+        return '[%s]' % ','.join(_pprint_value(i) for i in value)
+    return str(value)
+
+# NullHandler was added in py2.7
+if hasattr(logging, 'NullHandler'):
+    NullHandler = logging.NullHandler
+else:
+    class NullHandler(logging.Handler):
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
+
+LOG_FORMAT = logging.Formatter('[%(asctime)s] %(levelname)8s - %(name)s: %(message)s')
+
+NEPUGIA_DEBUG = bool(os.environ.get('NEPUGIA_DEBUG', False))

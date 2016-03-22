@@ -26,7 +26,7 @@ import functools
 import os
 import logging
 
-logger = logging.getLogger('naabal.util.file_io')
+logger = logging.getLogger(__name__)
 
 def only_if_open(orig_func):
     @functools.wraps(orig_func)
@@ -56,7 +56,7 @@ def chunked_copy(read_func, write_func, chunk_size=4 * 1024):
         chunk = read()
     return bytes_copied
 
-class FileInFile(object):
+class FileInFile(file):
     _handle = None
     _mode = None
     _name = None
