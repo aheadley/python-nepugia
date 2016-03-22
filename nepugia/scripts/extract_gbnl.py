@@ -1,3 +1,4 @@
+#!/bin/env python
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -22,17 +23,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .gbnl import GBNLFormat
-from .gstl import GSTLFormat
-from .pac import PACFormat
-from .save import RB2_SAVFormat, SAVSlotFormat
+import sys
+import os.path
 
-__all__ = ['GBNLFormat', 'GSTLFormat', 'PACFormat', 'RB2_SAVFormat', 'SAVSlotFormat']
+from nepugia.formats import GBNLFormat
 
-FORMATS = {
-    'gstl':     GSTLFormat,
-    'gbnl':     GBNLFormat,
-    'pac':      PACFormat,
-    'rb2sav':   RB2_SAVFormat,
-    'savslot':  SAVSlotFormat,
-}
+def main():
+    gbnl_fn = sys.argv[1]
+    target_dir = sys.argv[2]
+    extract_gbnl_rows(gbnl_fn, target_dir)
+
+def extract_gbnl_rows(src_file, dest_dir):
+    with open(src_file) as src_handle:
+        gbnl_data = GBNLFormat().parse_stream(src_handle)
+        src_handle.seek(0)
+
+        for r in range(gbnl_data.footer.row_count):
+            row_fn = os.path.join(dest_dir,
+                '{}-{:05d}.row'.format(os.path.basename(src_file).split('.')[0], r))
+            with open(row_fn, 'w') as row_handle:
+                row_handle.write(src_handle.read(gbnl_data.footer.row_size))
+
+if __name__ == '__main__':
+    main()

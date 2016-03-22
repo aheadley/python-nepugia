@@ -24,27 +24,25 @@
 # SOFTWARE.
 
 import logging
+import sys
+import os.path
 
 from nepugia.formats import PACFormat
 from nepugia.util.file_io import chunked_copy, FileInFile
 from nepugia.compression.huffmanc import HuffmanCoding
-import nepugia
 
-# logger = logging.getLogger(__name__)
-logger = nepugia.logger
+logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
-    import os.path
-    import sys
-
+def main():
     pac_filename = sys.argv[1]
     target_dir = sys.argv[2]
+    extract_pac_file(pac_filename, target_dir)
 
-    get_target_path = lambda p: os.path.join(target_dir, p.replace('\\', '/'))
+def extract_pac_file(src_file, dest_dir):
+    get_target_path = lambda p: os.path.join(dest_dir, p.replace('\\', '/'))
 
-    logger.info('Opening PAC file: %s', pac_filename)
-
-    with open(pac_filename) as pac_handle:
+    logger.info('Opening PAC file: %s', src_file)
+    with open(src_file) as pac_handle:
         pac_data = PACFormat.parse_stream(pac_handle)
         hc = HuffmanCoding()
 
@@ -82,3 +80,7 @@ if __name__ == '__main__':
                                     print err
                     else:
                         chunked_copy(entry_handle.read, target_file.write)
+
+if __name__ == '__main__':
+    main()
+

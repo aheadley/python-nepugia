@@ -23,11 +23,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from nepugia import *
+import argparse
 
-if __name__ == '__main__':
-    import argparse
+from nepugia.formats import FORMATS
+from nepugia.formats.gbnl_models import ROW_MODELS
+from nepugia.util import format_container
 
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', choices=FORMATS)
     parser.add_argument('-m', '--model', choices=ROW_MODELS, default='none')
@@ -37,6 +39,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    run_data(args)
+
+def run_data(args):
     for fn in args.files:
         with open(fn) as file_handle:
             if args.format == 'gbnl':
@@ -54,3 +59,6 @@ if __name__ == '__main__':
                     print format_container(parsed_file)
             else:
                 print parsed_file
+
+if __name__ == '__main__':
+    main()

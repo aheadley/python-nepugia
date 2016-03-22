@@ -23,21 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from nepugia.formats import GBNLFormat
+def main():
+    pass
 
 if __name__ == '__main__':
-    import sys
-    import os.path
-
-    gbnl_fn = sys.argv[1]
-    target_dir = sys.argv[2]
-
-
-    with open(gbnl_fn) as f:
-        data = GBNLFormat().parse_stream(f)
-
-        f.seek(0)
-
-        for r in range(data.footer.row_count):
-            with open(os.path.join(target_dir, '%05d.row' % r), 'w') as rf:
-                rf.write(f.read(data.footer.row_size))
+    main()

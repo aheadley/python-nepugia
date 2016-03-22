@@ -1,3 +1,4 @@
+#!/bin/env python
 # -*- coding: utf-8 -*-
 
 # The MIT License (MIT)
@@ -22,17 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .gbnl import GBNLFormat
-from .gstl import GSTLFormat
-from .pac import PACFormat
-from .save import RB2_SAVFormat, SAVSlotFormat
+def main():
+    pass
 
-__all__ = ['GBNLFormat', 'GSTLFormat', 'PACFormat', 'RB2_SAVFormat', 'SAVSlotFormat']
-
-FORMATS = {
-    'gstl':     GSTLFormat,
-    'gbnl':     GBNLFormat,
-    'pac':      PACFormat,
-    'rb2sav':   RB2_SAVFormat,
-    'savslot':  SAVSlotFormat,
-}
+if __name__ == '__main__':
+    main()
